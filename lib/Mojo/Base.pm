@@ -49,6 +49,17 @@ sub attr {
   for my $attr (@{ref $attrs eq 'ARRAY' ? $attrs : [$attrs]}) {
     Carp::croak qq{Attribute "$attr" invalid} unless $attr =~ /^[a-zA-Z_]\w*$/;
 
+    # Croaks if user attempts to define an already defined method in a class using Mojo::Base
+    {
+      no strict 'refs';
+      if ( defined *{ "${class}::${attr}" }{ CODE } )
+      {
+        Carp::croak(
+          "You cannot overwrite a locally defined method [ $attr ] in package [ $class ]"
+        );
+      }
+    }
+
     # Very performance-sensitive code with lots of micro-optimizations
     my $sub;
     if ($kv{weak}) {
